@@ -7,6 +7,7 @@ import type {
   ServerFrame
 } from './frames'
 import type { ClientStatus, CompanionClient, Connection } from './client'
+import { saveConnection as persist } from './secure-store'
 
 interface Conversation {
   turns: ConversationTurn[]
@@ -74,6 +75,9 @@ export const useStore = create<State>((set, get) => ({
           return { hostName: frame.hostName }
 
         case 'ready':
+          // Now it is worth remembering — a connection stored before this point
+          // left the app believing it was paired when it was not.
+          if (state.connection) void persist(state.connection.host, state.connection.port)
           return {
             hostName: state.hostName,
             sessions: Object.fromEntries(frame.sessions.map((s) => [s.tabId, s]))

@@ -8,7 +8,8 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "nl.mendrix.claudeterm.companion"
+      "bundleIdentifier": "nl.mendrix.claudeterm.companion",
+      "appleTeamId": "A42SG7SSPP"
     },
     "android": {
       "adaptiveIcon": {
@@ -25,7 +26,13 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Scan the pairing code shown on your Mac."
+        }
+      ]
     ],
     "scheme": "claude-term"
   }

@@ -1,14 +1,30 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { saveConnection } from '../lib/secure-store'
+import { parsePairingPayload } from '../lib/pairing-payload'
 import { useStore } from '../lib/store'
 import { theme } from '../lib/theme'
 
 /**
- * Pairing is typed in, because the host shows the code on a screen only its
- * owner can see — which is what makes the code proof of being there. There is no
- * QR to scan yet; when the host grows one, this screen gains a camera.
+ * The scanner is optional. expo-camera throws at import time when its native
+ * side is missing from the running build — which used to take the whole route
+ * tree down, on a screen the user had not even opened. Typing the code works
+ * either way, so a missing camera is a smaller screen, not a crash.
+ */
+let QrScanner: ((props: { onScan: (data: string) => void }) => React.JSX.Element) | null = null
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  QrScanner = (require('../components/QrScanner') as typeof import('../components/QrScanner'))
+    .QrScanner
+} catch {
+  QrScanner = null
+}
+
+/**
+ * Scan the code the Mac is showing, or type it.
+ *
+ * The QR carries the address and port as well, which is the whole point: an IP,
+ * a port and a code is a lot to retype every time a phone forgets a network.
  */
 export default function Pair(): React.JSX.Element {
   const router = useRouter()
@@ -16,26 +32,47 @@ export default function Pair(): React.JSX.Element {
   const status = useStore((s) => s.status)
   const detail = useStore((s) => s.detail)
   const attach = useStore((s) => s.attach)
+  const lastHost = useStore((s) => s.connection?.host ?? '')
+  const lastPort = useStore((s) => s.connection?.port)
 
-  const [host, setHost] = useState('')
-  const [port, setPort] = useState('')
+  const [scanning, setScanning] = useState(true)
+  // Prefilled from wherever this phone last connected, so a re-pair is just the code.
+  const [host, setHost] = useState(lastHost)
+  const [port, setPort] = useState(lastPort ? String(lastPort) : '')
   const [code, setCode] = useState('')
+
+  useEffect(() => {
+    if (status === 'ready') router.replace('/')
+  }, [status, router])
 
   const ready = host.trim().length > 0 && Number(port) > 0 && code.trim().length >= 6
 
-  const pair = async (): Promise<void> => {
-    if (!client || !ready) return
-    const connection = { host: host.trim(), port: Number(port) }
-    await saveConnection(connection.host, connection.port)
+  const pair = (nextHost: string, nextPort: number, nextCode: string): void => {
+    if (!client) return
+    const connection = { host: nextHost, port: nextPort }
+    // Saved only once the host accepts us — a stored connection makes the app
+    // think it is paired, and a failed attempt used to leave it stuck there.
     attach(client, connection)
-    client.pair(connection, code.trim())
+    client.pair(connection, nextCode)
+  }
+
+  const onScan = (raw: string): void => {
+    const payload = parsePairingPayload(raw)
+    if (!payload) return
+    setScanning(false)
+    setHost(payload.host)
+    setPort(String(payload.port))
+    setCode(payload.code)
+    pair(payload.host, payload.port, payload.code)
   }
 
   return (
     <View style={styles.page}>
+      {QrScanner && scanning ? <QrScanner onScan={onScan} /> : null}
+
       <Text style={styles.help}>
-        On the Mac: ⌘K → “Pair a phone…”. Both machines have to be on the same Tailscale network —
-        nothing else can reach it.
+        On the Mac: ⌘K → “Phones — pair or revoke…”. Both machines have to be on the same Tailscale
+        network; nothing else can reach it.
       </Text>
 
       <Field label="Address" value={host} onChange={setHost} placeholder="100.87.175.39" keyboard="numbers-and-punctuation" />
@@ -45,22 +82,15 @@ export default function Pair(): React.JSX.Element {
       <Pressable
         style={[styles.button, !ready && styles.buttonOff]}
         disabled={!ready || status === 'pairing'}
-        onPress={() => void pair()}
+        onPress={() => pair(host.trim(), Number(port), code.trim())}
       >
         <Text style={styles.buttonText}>{status === 'pairing' ? 'Pairing…' : 'Pair'}</Text>
       </Pressable>
 
-      {status === 'ready' ? (
-        <Pressable style={styles.done} onPress={() => router.replace('/')}>
-          <Text style={styles.doneText}>Paired — see your sessions</Text>
-        </Pressable>
-      ) : null}
-
       {status === 'error' && detail ? <Text style={styles.error}>{detail}</Text> : null}
 
       <Text style={styles.note}>
-        The Mac will ask you to confirm this device before it is trusted. The code works once and
-        expires after two minutes.
+        The code works once and expires after two minutes. If it fails, show a new one on the Mac.
       </Text>
     </View>
   )
@@ -99,9 +129,9 @@ function Field({
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: theme.bg, padding: 20, gap: 14 },
-  help: { color: theme.dim, fontSize: 14, lineHeight: 20 },
-  field: { gap: 6 },
+  page: { flex: 1, backgroundColor: theme.bg, padding: 20, gap: 12 },
+  help: { color: theme.dim, fontSize: 13, lineHeight: 19 },
+  field: { gap: 5 },
   label: { color: theme.faint, fontSize: 12, letterSpacing: 0.5 },
   input: {
     color: theme.text,
@@ -109,7 +139,7 @@ const styles = StyleSheet.create({
     borderColor: theme.border,
     borderWidth: 1,
     borderRadius: 10,
-    padding: 13,
+    padding: 12,
     fontSize: 16,
     fontFamily: theme.mono
   },
@@ -118,12 +148,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 6
+    marginTop: 4
   },
   buttonOff: { backgroundColor: theme.border },
   buttonText: { color: theme.bg, fontWeight: '700', fontSize: 15 },
-  done: { backgroundColor: theme.good, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
-  doneText: { color: theme.bg, fontWeight: '700', fontSize: 15 },
   error: { color: theme.bad, fontSize: 13 },
-  note: { color: theme.faint, fontSize: 12, lineHeight: 18, marginTop: 4 }
+  note: { color: theme.faint, fontSize: 12, lineHeight: 18 }
 })
