@@ -19,7 +19,11 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "nl.mendrix.claudeterm.companion"
+      "package": "nl.mendrix.claudeterm.companion",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -34,6 +38,13 @@
         }
       ]
     ],
-    "scheme": "claude-term"
+    "scheme": "claude-term",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f72ff1d6-3359-4022-84c5-9bae92bc8b16"
+      }
+    },
+    "owner": "robcvdv"
   }
 }
