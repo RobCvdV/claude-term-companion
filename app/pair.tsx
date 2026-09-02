@@ -54,6 +54,13 @@ export default function Pair(): React.JSX.Element {
     if (status === 'ready') router.replace('/')
   }, [status, router])
 
+  // A scan that failed leaves nothing to try again with: the camera is put away
+  // the moment it reads a code, so a spent or lapsed one used to strand the
+  // screen. Bring it back so the next code on the Mac can just be scanned.
+  useEffect(() => {
+    if (status === 'error') setScanning(true)
+  }, [status])
+
   // The stored connection is loaded asynchronously (see _layout), so it can
   // arrive after this screen has already mounted — useState would have missed
   // it and left Address blank with the button dead and nothing said about why.

@@ -29,6 +29,8 @@ export default function Session(): React.JSX.Element {
   const notice = useStore((s) => s.notice)
   const status = useStore((s) => s.status)
   const detail = useStore((s) => s.detail)
+  const live = status === 'ready'
+
   const { watch, unwatch, decide, submit, refreshScreen, clearNotice, client } = useStore()
 
   useEffect(() => {
@@ -140,17 +142,21 @@ export default function Session(): React.JSX.Element {
       </ScrollView>
 
       <View style={styles.composer}>
+        {/* Dead while the Mac is unreachable: nothing typed here could go
+            anywhere, and finding that out after writing a prompt is worse than
+            being told up front. */}
         <TextInput
-          style={styles.input}
+          style={[styles.input, !live && styles.inputOff]}
           value={draft}
           onChangeText={setDraft}
-          placeholder="Send a prompt…"
+          placeholder={live ? 'Send a prompt…' : 'Not connected to the Mac'}
           placeholderTextColor={theme.faint}
+          editable={live}
           multiline
         />
         <Pressable
-          style={[styles.send, !draft.trim() && styles.sendOff]}
-          disabled={!draft.trim()}
+          style={[styles.send, (!draft.trim() || !live) && styles.sendOff]}
+          disabled={!draft.trim() || !live}
           onPress={send}
         >
           <Text style={styles.sendText}>↑</Text>
@@ -173,6 +179,7 @@ const styles = StyleSheet.create({
   dot: { width: 8, height: 8, borderRadius: 4 },
   barText: { color: theme.dim, fontSize: 12, flex: 1 },
   barOffline: { color: theme.bad },
+  inputOff: { color: theme.faint, borderColor: theme.border, opacity: 0.6 },
   barAction: { color: theme.accent, fontSize: 12, fontWeight: '600' },
   notice: {
     color: theme.bg,
