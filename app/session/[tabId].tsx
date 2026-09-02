@@ -27,6 +27,8 @@ export default function Session(): React.JSX.Element {
   const screen = useStore((s) => (tabId ? s.screens[tabId] : undefined))
   const prompts = useStore((s) => s.prompts)
   const notice = useStore((s) => s.notice)
+  const status = useStore((s) => s.status)
+  const detail = useStore((s) => s.detail)
   const { watch, unwatch, decide, submit, refreshScreen, clearNotice, client } = useStore()
 
   useEffect(() => {
@@ -68,10 +70,22 @@ export default function Session(): React.JSX.Element {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 96 : 0}
     >
       <View style={styles.bar}>
-        <View style={[styles.dot, { backgroundColor: activityColor(session?.activity ?? 'idle') }]} />
-        <Text style={styles.barText}>
-          {activityLabel(session?.activity ?? 'idle')}
-          {session?.branch ? `  ·  ${session.branch}` : ''}
+        {/* The session's own state is meaningless while the Mac is out of
+            reach: everything on screen is then a snapshot of the past, and
+            nothing typed here can go anywhere. Say which it is. */}
+        <View
+          style={[
+            styles.dot,
+            {
+              backgroundColor:
+                status === 'ready' ? activityColor(session?.activity ?? 'idle') : theme.bad
+            }
+          ]}
+        />
+        <Text style={[styles.barText, status !== 'ready' && styles.barOffline]}>
+          {status === 'ready'
+            ? `${activityLabel(session?.activity ?? 'idle')}${session?.branch ? `  ·  ${session.branch}` : ''}`
+            : (detail ?? 'not connected to the Mac')}
         </Text>
         <Pressable
           onPress={() => {
@@ -158,6 +172,7 @@ const styles = StyleSheet.create({
   },
   dot: { width: 8, height: 8, borderRadius: 4 },
   barText: { color: theme.dim, fontSize: 12, flex: 1 },
+  barOffline: { color: theme.bad },
   barAction: { color: theme.accent, fontSize: 12, fontWeight: '600' },
   notice: {
     color: theme.bg,

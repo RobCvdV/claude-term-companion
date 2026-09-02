@@ -55,6 +55,18 @@ const empty = {
   notice: null
 }
 
+/**
+ * True when nothing can be sent right now, having said so on the way out.
+ * The detail carries the host's own words when it gave any — "this Mac revoked
+ * this phone" is a great deal more use than a screen that stops responding.
+ */
+function offline(get: () => State, set: (partial: Partial<State>) => void): boolean {
+  const { client, status, detail } = get()
+  if (client && status === 'ready') return false
+  set({ notice: detail ?? 'Not connected to the Mac — nothing was sent' })
+  return true
+}
+
 export const useStore = create<State>((set, get) => ({
   client: null,
   connection: null,
@@ -144,8 +156,17 @@ export const useStore = create<State>((set, get) => ({
       }
     }),
 
-  decide: (promptId, decision) => get().client?.send({ type: 'decide', promptId, decision }),
-  submit: (tabId, text) => get().client?.send({ type: 'submit', tabId, text }),
+  // A tap that cannot reach the Mac has to say so. `send` drops anything that
+  // is not on a live connection, so revoking a phone mid-session — or any lost
+  // socket — made the session screen look frozen: it kept showing everything
+  // and answered nothing. Only the actions a person takes report this; the
+  // background refreshes stay quiet.
+  decide: (promptId, decision) => {
+    if (!offline(get, set)) get().client?.send({ type: 'decide', promptId, decision })
+  },
+  submit: (tabId, text) => {
+    if (!offline(get, set)) get().client?.send({ type: 'submit', tabId, text })
+  },
   watch: (tabId) => get().client?.send({ type: 'subscribe', tabId }),
   unwatch: () => get().client?.send({ type: 'unsubscribe' }),
   refreshScreen: (tabId) => get().client?.send({ type: 'screen', tabId }),
