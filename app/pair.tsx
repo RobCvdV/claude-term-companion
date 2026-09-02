@@ -1,5 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View
+} from 'react-native'
 import { useRouter } from 'expo-router'
 import { parsePairingPayload } from '../lib/pairing-payload'
 import { useStore } from '../lib/store'
@@ -67,32 +76,46 @@ export default function Pair(): React.JSX.Element {
   }
 
   return (
-    <View style={styles.page}>
-      {QrScanner && scanning ? <QrScanner onScan={onScan} /> : null}
-
-      <Text style={styles.help}>
-        On the Mac: ⌘K → “Phones — pair or revoke…”. Both machines have to be on the same Tailscale
-        network; nothing else can reach it.
-      </Text>
-
-      <Field label="Address" value={host} onChange={setHost} placeholder="100.87.175.39" keyboard="numbers-and-punctuation" />
-      <Field label="Port" value={port} onChange={setPort} placeholder="50987" keyboard="number-pad" />
-      <Field label="Code" value={code} onChange={setCode} placeholder="F96CFMS8" autoCaps />
-
-      <Pressable
-        style={[styles.button, !ready && styles.buttonOff]}
-        disabled={!ready || status === 'pairing'}
-        onPress={() => pair(host.trim(), Number(port), code.trim())}
+    // The keyboard used to cover the fields with no way to reach them: the
+    // scanner alone is 220pt, and on a small phone the code field sits exactly
+    // where the keyboard comes up. Same pattern as the session screen, plus a
+    // scroll so every field stays reachable while it is open.
+    <KeyboardAvoidingView
+      style={styles.page}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 96 : 0}
+    >
+      <ScrollView
+        contentContainerStyle={styles.inner}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
       >
-        <Text style={styles.buttonText}>{status === 'pairing' ? 'Pairing…' : 'Pair'}</Text>
-      </Pressable>
+        {QrScanner && scanning ? <QrScanner onScan={onScan} /> : null}
 
-      {status === 'error' && detail ? <Text style={styles.error}>{detail}</Text> : null}
+        <Text style={styles.help}>
+          On the Mac: ⌘K → “Phones — pair or revoke…”. Both machines have to be on the same
+          Tailscale network; nothing else can reach it.
+        </Text>
 
-      <Text style={styles.note}>
-        The code works once and expires after two minutes. If it fails, show a new one on the Mac.
-      </Text>
-    </View>
+        <Field label="Address" value={host} onChange={setHost} placeholder="100.87.175.39" keyboard="numbers-and-punctuation" />
+        <Field label="Port" value={port} onChange={setPort} placeholder="50987" keyboard="number-pad" />
+        <Field label="Code" value={code} onChange={setCode} placeholder="F96CFMS8" autoCaps />
+
+        <Pressable
+          style={[styles.button, !ready && styles.buttonOff]}
+          disabled={!ready || status === 'pairing'}
+          onPress={() => pair(host.trim(), Number(port), code.trim())}
+        >
+          <Text style={styles.buttonText}>{status === 'pairing' ? 'Pairing…' : 'Pair'}</Text>
+        </Pressable>
+
+        {status === 'error' && detail ? <Text style={styles.error}>{detail}</Text> : null}
+
+        <Text style={styles.note}>
+          The code works once and expires after two minutes. If it fails, show a new one on the Mac.
+        </Text>
+      </ScrollView>
+    </KeyboardAvoidingView>
   )
 }
 
@@ -129,7 +152,8 @@ function Field({
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: theme.bg, padding: 20, gap: 12 },
+  page: { flex: 1, backgroundColor: theme.bg },
+  inner: { padding: 20, gap: 12, paddingBottom: 40 },
   help: { color: theme.dim, fontSize: 13, lineHeight: 19 },
   field: { gap: 5 },
   label: { color: theme.faint, fontSize: 12, letterSpacing: 0.5 },
