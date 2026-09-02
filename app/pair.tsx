@@ -54,7 +54,20 @@ export default function Pair(): React.JSX.Element {
     if (status === 'ready') router.replace('/')
   }, [status, router])
 
-  const ready = host.trim().length > 0 && Number(port) > 0 && code.trim().length >= 6
+  // The stored connection is loaded asynchronously (see _layout), so it can
+  // arrive after this screen has already mounted — useState would have missed
+  // it and left Address blank with the button dead and nothing said about why.
+  useEffect(() => {
+    if (lastHost) setHost((current) => current || lastHost)
+    if (lastPort) setPort((current) => current || String(lastPort))
+  }, [lastHost, lastPort])
+
+  const missing = [
+    host.trim() ? null : 'address',
+    Number(port) > 0 ? null : 'port',
+    code.trim().length >= 6 ? null : 'code'
+  ].filter(Boolean)
+  const ready = missing.length === 0
 
   const pair = (nextHost: string, nextPort: number, nextCode: string): void => {
     if (!client) return
@@ -110,6 +123,12 @@ export default function Pair(): React.JSX.Element {
         </Pressable>
 
         {status === 'error' && detail ? <Text style={styles.error}>{detail}</Text> : null}
+
+        {!ready ? (
+          <Text style={styles.note}>
+            Still needed: {missing.join(', ')} — scan the code on the Mac to fill all three.
+          </Text>
+        ) : null}
 
         <Text style={styles.note}>
           The code works once and expires after two minutes. If it fails, show a new one on the Mac.

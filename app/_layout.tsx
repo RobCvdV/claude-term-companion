@@ -42,9 +42,16 @@ export default function Layout(): React.JSX.Element {
   useEffect(() => {
     let client: CompanionClient | null = null
     let token: string | null = null
+    // The setup below awaits the keychain and the notification permission, so it
+    // can still be running when this effect is torn down (a remount, or Fast
+    // Refresh in a dev build). Without this the cleanup has nothing to
+    // disconnect yet and the socket it goes on to open is left dangling —
+    // connected, unreferenced and impossible to close.
+    let cancelled = false
 
     void (async () => {
       const identity = await loadIdentity(keychain, randomBytes)
+      if (cancelled) return
       token = await pushToken()
       client = new CompanionClient(
         identity,
@@ -54,6 +61,7 @@ export default function Layout(): React.JSX.Element {
         () => token
       )
       const connection = await loadConnection()
+      if (cancelled) return
       attach(client, connection ?? { host: '', port: 0 })
       if (connection?.host) client.connect(connection)
     })()
@@ -64,6 +72,7 @@ export default function Layout(): React.JSX.Element {
       client?.reportForeground(state === 'active', null)
     })
     return () => {
+      cancelled = true
       subscription.remove()
       client?.disconnect()
     }
