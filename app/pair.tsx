@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   KeyboardAvoidingView,
   Platform,
@@ -37,10 +37,10 @@ try {
  */
 export default function Pair(): React.JSX.Element {
   const router = useRouter()
-  const client = useStore((s) => s.client)
   const status = useStore((s) => s.status)
   const detail = useStore((s) => s.detail)
-  const attach = useStore((s) => s.attach)
+  const beginPair = useStore((s) => s.beginPair)
+  const restoreActive = useStore((s) => s.restoreActive)
   const lastHost = useStore((s) => s.connection?.host ?? '')
   const lastPort = useStore((s) => s.connection?.port)
 
@@ -50,9 +50,23 @@ export default function Pair(): React.JSX.Element {
   const [port, setPort] = useState(lastPort ? String(lastPort) : '')
   const [code, setCode] = useState('')
 
+  const paired = useRef(false)
+
   useEffect(() => {
-    if (status === 'ready') router.replace('/')
+    if (status !== 'ready') return
+    paired.current = true
+    router.replace('/')
   }, [status, router])
+
+  // An abandoned attempt must not leave the app pointed at a Mac it never
+  // reached: pairing aims the one client somewhere new, so backing out of a
+  // failed code used to drop the Mac that was working a moment ago.
+  useEffect(
+    () => () => {
+      if (!paired.current) restoreActive()
+    },
+    [restoreActive]
+  )
 
   // A scan that failed leaves nothing to try again with: the camera is put away
   // the moment it reads a code, so a spent or lapsed one used to strand the
@@ -76,14 +90,10 @@ export default function Pair(): React.JSX.Element {
   ].filter(Boolean)
   const ready = missing.length === 0
 
-  const pair = (nextHost: string, nextPort: number, nextCode: string): void => {
-    if (!client) return
-    const connection = { host: nextHost, port: nextPort }
-    // Saved only once the host accepts us — a stored connection makes the app
-    // think it is paired, and a failed attempt used to leave it stuck there.
-    attach(client, connection)
-    client.pair(connection, nextCode)
-  }
+  // Remembered only once the host accepts us — a stored connection makes the
+  // app think it is paired, and a failed attempt used to leave it stuck there.
+  const pair = (nextHost: string, nextPort: number, nextCode: string): void =>
+    beginPair({ host: nextHost, port: nextPort }, nextCode)
 
   const onScan = (raw: string): void => {
     const payload = parsePairingPayload(raw)
@@ -114,7 +124,8 @@ export default function Pair(): React.JSX.Element {
 
         <Text style={styles.help}>
           On the Mac: ⌘K → “Phones — pair or revoke…”. Both machines have to be on the same
-          Tailscale network; nothing else can reach it.
+          Tailscale network; nothing else can reach it. Pair as many Macs as you like — Settings
+          switches between them.
         </Text>
 
         <Field label="Address" value={host} onChange={setHost} placeholder="100.87.175.39" keyboard="numbers-and-punctuation" />
