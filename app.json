@@ -9,7 +9,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "nl.mendrix.claudeterm.companion",
-      "appleTeamId": "A42SG7SSPP"
+      "appleTeamId": "A42SG7SSPP",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
