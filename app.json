@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": false,
+      "supportsTablet": true,
       "bundleIdentifier": "nl.mendrix.claudeterm.companion",
       "appleTeamId": "A42SG7SSPP",
       "config": {
