@@ -1,0 +1,14 @@
+<svg width="1024" height="1024" viewBox="-80 -80 1184 1184" xmlns="http://www.w3.org/2000/svg">
+  <clipPath id="c"><rect x="106" y="106" width="812" height="812"/></clipPath>
+  <g clip-path="url(#c)">
+  <line x1="0" y1="310" x2="252" y2="310" stroke="#ffffff" stroke-opacity="0.2" stroke-width="18"/>
+  <line x1="550" y1="310" x2="1024" y2="310" stroke="#ffffff" stroke-opacity="0.2" stroke-width="18"/>
+  <path d="M 252 310 L 252 206 Q 252 176 282 176 L 520 176 Q 550 176 550 206 L 550 310" fill="none" stroke="#bbbbbb" stroke-opacity="0.9" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="310" cy="240" r="24" fill="#ff4422"/>
+  <circle cx="630" cy="240" r="24" fill="#99ff22"/>
+  <path d="M 240 500 L 350 610 L 240 720" fill="none" stroke="#b8bcc8" stroke-width="52" stroke-linecap="round" stroke-linejoin="round"/>
+  <g transform="translate(600 610)" stroke="#d97757" stroke-width="40" stroke-linecap="round">
+    <line x2="178"/><line x2="106" transform="rotate(33)"/><line x2="176" transform="rotate(63)"/><line x2="104" transform="rotate(95)"/><line x2="180" transform="rotate(128)"/><line x2="108" transform="rotate(160)"/><line x2="176" transform="rotate(190)"/><line x2="106" transform="rotate(222)"/><line x2="178" transform="rotate(252)"/><line x2="104" transform="rotate(285)"/><line x2="174" transform="rotate(318)"/>
+  </g>
+  </g>
+</svg>
