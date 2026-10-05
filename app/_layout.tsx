@@ -6,7 +6,8 @@ import * as Device from 'expo-device'
 import * as Notifications from 'expo-notifications'
 import { CompanionClient } from '../lib/client'
 import { loadIdentity } from '../lib/identity'
-import { keychain, loadConnection, randomBytes } from '../lib/secure-store'
+import { activeHost } from '../lib/hosts'
+import { keychain, loadBook, randomBytes } from '../lib/secure-store'
 import { useStore } from '../lib/store'
 import { theme } from '../lib/theme'
 
@@ -60,10 +61,11 @@ export default function Layout(): React.JSX.Element {
         Device.deviceName ?? 'phone',
         () => token
       )
-      const connection = await loadConnection()
+      const book = await loadBook()
       if (cancelled) return
-      attach(client, connection ?? { host: '', port: 0 })
-      if (connection?.host) client.connect(connection)
+      attach(client, book)
+      const live = activeHost(book)
+      if (live) client.connect(live)
     })()
 
     // The host skips a push for a session this device is looking at, so it has

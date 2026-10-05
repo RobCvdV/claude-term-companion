@@ -27,9 +27,25 @@ good for two minutes and enrols exactly one device. Type those into the app's
 pairing screen. The Mac then asks you to confirm the device by name before it is
 trusted, and **Paired phones…** revokes any of them later.
 
+### Several Macs
+
+One device key enrols with as many Macs as you like — each stores the public half
+separately — so pair every machine you run claude-term on. **Settings** lists
+them, and tapping the host name in the Sessions header switches between them.
+
+The phone talks to one Mac at a time: switching drops the socket to the old one
+and dials the new. Pushes are unaffected, because a Mac pushes to the device
+token it holds whether or not the socket is up — so every paired Mac can still
+tell you a session wants you.
+
+Forgetting a Mac only removes it from this list; the device key stays, because it
+is the same key the other Macs trust. Revoke the phone on that Mac too, under
+**Paired phones…**.
+
 ## What it can do
 
 - list the Mac's live sessions, with what each is doing
+- switch between several paired Macs
 - follow a session's conversation, read from the session transcript
 - answer a permission prompt: allow, allow-and-stop-asking, deny with a reason,
   or hand it back to the terminal — which is always still showing the same

@@ -1,6 +1,7 @@
 import * as SecureStore from 'expo-secure-store'
 import * as Crypto from 'expo-crypto'
 import type { KeyStore } from './identity'
+import { parseBook, remember, type HostBook } from './hosts'
 
 /** The device key lives in the Keychain, not in app storage. */
 export const keychain: KeyStore = {
@@ -11,21 +12,25 @@ export const keychain: KeyStore = {
 
 export const randomBytes = (n: number): Uint8Array => Crypto.getRandomBytes(n)
 
-const HOST = 'companion.host'
-const PORT = 'companion.port'
+const BOOK = 'companion.hosts'
+/** Where the one-and-only Mac used to live, before there could be several. */
+const LEGACY_HOST = 'companion.host'
+const LEGACY_PORT = 'companion.port'
 
-export async function loadConnection(): Promise<{ host: string; port: number } | null> {
-  const host = await SecureStore.getItemAsync(HOST)
-  const port = await SecureStore.getItemAsync(PORT)
-  return host && port ? { host, port: Number(port) } : null
+export async function loadBook(): Promise<HostBook> {
+  const book = parseBook(await SecureStore.getItemAsync(BOOK))
+  if (book.hosts.length) return book
+
+  const host = await SecureStore.getItemAsync(LEGACY_HOST)
+  const port = Number(await SecureStore.getItemAsync(LEGACY_PORT))
+  if (!host || !Number.isFinite(port) || port <= 0) return book
+  const migrated = remember(book, { host, port })
+  await saveBook(migrated)
+  await SecureStore.deleteItemAsync(LEGACY_HOST)
+  await SecureStore.deleteItemAsync(LEGACY_PORT)
+  return migrated
 }
 
-export async function saveConnection(host: string, port: number): Promise<void> {
-  await SecureStore.setItemAsync(HOST, host)
-  await SecureStore.setItemAsync(PORT, String(port))
-}
-
-export async function forgetConnection(): Promise<void> {
-  await SecureStore.deleteItemAsync(HOST)
-  await SecureStore.deleteItemAsync(PORT)
+export async function saveBook(book: HostBook): Promise<void> {
+  await SecureStore.setItemAsync(BOOK, JSON.stringify(book))
 }
