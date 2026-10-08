@@ -4,7 +4,7 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@noble/curves": "^2.3.0",
-    "claude-term-protocol": "github:RobCvdV/claude-term-protocol#v0.6.0",
+    "claude-term-protocol": "github:RobCvdV/claude-term-protocol#v0.7.0",
     "expo": "~57.0.16",
     "expo-camera": "~57.0.4",
     "expo-constants": "~57.0.14",
