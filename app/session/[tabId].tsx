@@ -11,6 +11,7 @@ import {
 } from 'react-native'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
 import { PromptCard } from '../../components/PromptCard'
+import { WorkingRow } from '../../components/WorkingRow'
 import { TurnRow } from '../../components/TurnRow'
 import { useStore } from '../../lib/store'
 import { activityColor, activityLabel, theme } from '../../lib/theme'
@@ -131,6 +132,8 @@ export default function Session(): React.JSX.Element {
         ) : (
           turns.map((turn, i) => <TurnRow key={i} turn={turn} />)
         )}
+
+        {session?.activity === 'busy' ? <WorkingRow session={session} /> : null}
 
         {waiting.map((prompt) => (
           <PromptCard

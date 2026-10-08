@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import type { PendingPrompt, PromptDecision } from '../lib/frames'
-import { Markdownish } from '../lib/markdown'
+import { Markdown } from '../lib/markdown'
 import { theme } from '../lib/theme'
 
 /**
@@ -31,7 +31,7 @@ export function PromptCard({
 
       {prompt.kind === 'plan' && prompt.plan ? (
         <View style={styles.plan}>
-          <Markdownish source={prompt.plan} />
+          <Markdown source={prompt.plan} />
         </View>
       ) : null}
 

@@ -44,9 +44,11 @@ is the same key the other Macs trust. Revoke the phone on that Mac too, under
 
 ## What it can do
 
-- list the Mac's live sessions, with what each is doing
+- list the Mac's live sessions, with what each is doing — the terminal's own
+  "Tinkering…", the tool running and how long the turn has taken
 - switch between several paired Macs
-- follow a session's conversation, read from the session transcript
+- follow a session's conversation, read from the session transcript and drawn
+  as markdown
 - answer a permission prompt: allow, allow-and-stop-asking, deny with a reason,
   or hand it back to the terminal — which is always still showing the same
   question
