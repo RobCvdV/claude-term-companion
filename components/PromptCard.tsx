@@ -26,6 +26,7 @@ export function PromptCard({
       <Text style={styles.kind}>
         {prompt.kind === 'plan' ? 'PLAN' : prompt.kind === 'question' ? 'QUESTION' : 'PERMISSION'}
         <Text style={styles.tool}>  {prompt.toolName}</Text>
+        {prompt.reasked ? <Text style={styles.tool}>  · asked again</Text> : null}
       </Text>
 
       {prompt.kind === 'plan' && prompt.plan ? (
