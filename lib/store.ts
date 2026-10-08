@@ -99,7 +99,12 @@ export const useStore = create<State>((set, get) => ({
 
         case 'ready': {
           const sessions = Object.fromEntries(frame.sessions.map((s) => [s.tabId, s]))
-          if (!state.connection) return { sessions }
+          // Cards answered while we were away; the host re-sends what still waits.
+          const waiting = new Set(frame.sessions.flatMap((s) => s.pendingPromptIds))
+          const prompts = Object.fromEntries(
+            Object.entries(state.prompts).filter(([id]) => waiting.has(id))
+          )
+          if (!state.connection) return { sessions, prompts }
           // Only now is it worth remembering — a host written down before this
           // point left the app believing it was paired when it was not.
           const book = remember(state.book, {
@@ -108,7 +113,7 @@ export const useStore = create<State>((set, get) => ({
             ...(state.hostName ? { name: state.hostName } : {})
           })
           void saveBook(book)
-          return { book, sessions }
+          return { book, sessions, prompts }
         }
 
         case 'sessions':
