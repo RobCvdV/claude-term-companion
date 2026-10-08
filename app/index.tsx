@@ -1,8 +1,9 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { Link, useRouter } from 'expo-router'
 import { key, label } from '../lib/hosts'
 import { orderedHosts, sortedSessions, useStore } from '../lib/store'
+import { doingSummary } from '../lib/doing'
 import { activityColor, activityLabel, theme } from '../lib/theme'
 
 /** One word for the header; the long version goes on its own line below. */
@@ -31,6 +32,15 @@ export default function Sessions(): React.JSX.Element {
   const macs = orderedHosts(book)
   const waitingFor = (tabId: string): number =>
     Object.values(prompts).filter((p) => p.tabId === tabId).length
+
+  // a working row counts its time; nothing ticks while every session is idle
+  const [now, setNow] = useState(Date.now())
+  const anyBusy = list.some((s) => s.activity === 'busy')
+  useEffect(() => {
+    if (!anyBusy) return
+    const timer = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(timer)
+  }, [anyBusy])
 
   if (!connection?.host) {
     return (
@@ -96,8 +106,10 @@ export default function Sessions(): React.JSX.Element {
             <View style={[styles.dot, { backgroundColor: activityColor(session.activity) }]} />
             <View style={styles.rowBody}>
               <Text style={styles.folder}>{session.folder}</Text>
-              <Text style={styles.meta}>
-                {activityLabel(session.activity)}
+              <Text style={styles.meta} numberOfLines={1}>
+                {session.activity === 'busy'
+                  ? doingSummary(session, now)
+                  : activityLabel(session.activity)}
                 {session.branch ? `  ·  ${session.branch}` : ''}
                 {session.model ? `  ·  ${session.model}` : ''}
               </Text>
