@@ -4,8 +4,8 @@ import { elapsed, spinnerWord, toolLine } from '../lib/doing'
 import type { CompanionSession } from '../lib/frames'
 import { theme } from '../lib/theme'
 
-/** The terminal's own spinner frames. */
-const FRAMES = ['·', '✢', '✳', '✶', '✻', '✽', '✻', '✶', '✳', '✢']
+/** The terminal's own spinner frames, kept from turning into emoji. */
+const FRAMES = ['·', '✢', '✳', '✶', '✻', '✽', '✻', '✶', '✳', '✢'].map((f) => `${f}\uFE0E`)
 
 /** The terminal's "Tinkering… (1m 05s)" line, for a session that is working. */
 export function WorkingRow({ session }: { session: CompanionSession }): React.JSX.Element {

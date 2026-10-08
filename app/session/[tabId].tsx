@@ -14,6 +14,7 @@ import { PromptCard } from '../../components/PromptCard'
 import { WorkingRow } from '../../components/WorkingRow'
 import { TurnRow } from '../../components/TurnRow'
 import { useStore } from '../../lib/store'
+import { feedItems } from '../../lib/turn-view'
 import { activityColor, activityLabel, theme } from '../../lib/theme'
 
 export default function Session(): React.JSX.Element {
@@ -130,7 +131,7 @@ export default function Session(): React.JSX.Element {
         {turns.length === 0 ? (
           <Text style={styles.earlier}>Nothing said yet.</Text>
         ) : (
-          turns.map((turn, i) => <TurnRow key={i} turn={turn} />)
+          feedItems(turns).map((item, i) => <TurnRow key={i} item={item} />)
         )}
 
         {session?.activity === 'busy' ? <WorkingRow session={session} /> : null}
