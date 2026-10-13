@@ -3,7 +3,7 @@ import { Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } 
 import { Link, useRouter } from 'expo-router'
 import { key, label } from '../lib/hosts'
 import { orderedHosts, sortedSessions, useStore } from '../lib/store'
-import { doingSummary } from '../lib/doing'
+import { doingSummary, runningSummary } from '../lib/doing'
 import { activityColor, activityLabel, theme } from '../lib/theme'
 
 /** One word for the header; the long version goes on its own line below. */
@@ -97,19 +97,25 @@ export default function Sessions(): React.JSX.Element {
 
       {list.map((session) => {
         const waiting = waitingFor(session.tabId)
+        // not in a turn, but a script or background task keeps it from being done
+        const running = session.activity === 'busy' ? null : runningSummary(session)
+        const dotColor =
+          running && session.activity !== 'needs-attention'
+            ? theme.running
+            : activityColor(session.activity)
         return (
           <Pressable
             key={session.tabId}
             style={styles.row}
             onPress={() => router.push(`/session/${session.tabId}`)}
           >
-            <View style={[styles.dot, { backgroundColor: activityColor(session.activity) }]} />
+            <View style={[styles.dot, { backgroundColor: dotColor }]} />
             <View style={styles.rowBody}>
               <Text style={styles.folder}>{session.folder}</Text>
               <Text style={styles.meta} numberOfLines={1}>
                 {session.activity === 'busy'
                   ? doingSummary(session, now)
-                  : activityLabel(session.activity)}
+                  : (running ?? activityLabel(session.activity))}
                 {session.branch ? `  ·  ${session.branch}` : ''}
                 {session.model ? `  ·  ${session.model}` : ''}
               </Text>

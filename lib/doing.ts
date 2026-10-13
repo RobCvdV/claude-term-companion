@@ -24,6 +24,14 @@ export function toolLine(session: CompanionSession): string | null {
   return detail ? `${tool}  ${detail}` : tool
 }
 
+/** What an idle tab is still running — `▶ npm run dev +1` — or null when nothing. */
+export function runningSummary(session: CompanionSession): string | null {
+  const running = session.running ?? []
+  if (running.length === 0) return null
+  const first = `▶ ${running[0].label}`
+  return running.length === 1 ? first : `${first} +${running.length - 1}`
+}
+
 /** One line for a session list row while it works. */
 export function doingSummary(session: CompanionSession, now: number): string {
   const parts = [spinnerWord(session)]
