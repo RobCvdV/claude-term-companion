@@ -11,6 +11,8 @@ export const theme = {
   good: '#9ece6a',
   warn: '#e0af68',
   bad: '#f7768e',
+  /** idle, but a command or background task is still running */
+  running: '#7dcfff',
   mono: 'Menlo'
 } as const
 

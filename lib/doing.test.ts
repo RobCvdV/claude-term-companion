@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CompanionSession } from './frames'
-import { doingSummary, elapsed, spinnerWord, toolLine } from './doing'
+import { doingSummary, elapsed, runningSummary, spinnerWord, toolLine } from './doing'
 
 const session = (over: Partial<CompanionSession> = {}): CompanionSession => ({
   tabId: 't1',
@@ -51,5 +51,21 @@ describe('doingSummary', () => {
   it('puts word, tool and time on one line', () => {
     expect(doingSummary(session({ doing }), 63_000)).toBe('Tinkering…  ·  Bash  ·  1m 02s')
     expect(doingSummary(session({ busySince: null }), 0)).toBe('Working…')
+  })
+})
+
+describe('runningSummary', () => {
+  const work = (label: string) => ({ kind: 'shell', label, since: null })
+
+  it('names the first running thing and counts the rest', () => {
+    expect(runningSummary(session({ running: [work('npm run dev')] }))).toBe('▶ npm run dev')
+    expect(runningSummary(session({ running: [work('npm run dev'), work('ping')] }))).toBe(
+      '▶ npm run dev +1'
+    )
+  })
+
+  it('is null when nothing runs, or the host is too old to say', () => {
+    expect(runningSummary(session({ running: [] }))).toBeNull()
+    expect(runningSummary(session())).toBeNull()
   })
 })
